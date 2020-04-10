@@ -1,0 +1,53 @@
+# macOS
+.DS_Store
+
+# Binary
+terraform
+
+# Sublime Text project files
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio Code project files
+.vscode
+
+# Vagrant
+.vagrant/
+
+# Sensitive configs and keys
+*.pem
+aws.yml
+answers.txt
+.envrc
+
+# Terraform
+*.tfplan
+.terraform/
+*.tfstate*
+
+# Python
+*.pyc
+__pycache__/
+# IDEA
+.idea
+
+*.tf.swp
+
+
+# atlantis
+atlantis.yq.yaml
+
+override.tf
+
+# ansible
+*.retry
+
+*.zip
+
+# terrafile
+**/vendor/
+
+.generated
+plan
+
+roles/

@@ -1,0 +1,49 @@
+image: traefik
+imageTag: 1.7.20
+
+serviceType: NodePort
+whiteListSourceRange: []
+
+replicas: 1
+
+startupArguments:
+  - "--checknewversion=false"
+
+podDisruptionBudget:
+  minAvailable: 1
+
+proxyProtocol:
+  enabled: true
+  # trustedIPs is required when enabled
+  trustedIPs:
+    - 172.16.160.210/32
+forwardedHeaders:
+  enabled: true
+  # trustedIPs is required when enabled
+  trustedIPs:
+    - 172.16.160.210/32
+
+ssl:
+  enabled: false
+  enforced: false
+  upstream: true
+
+dashboard:
+  enabled: true
+  domain: traefik.devopsua.tk
+
+service:
+  nodePorts:
+    http: 30080
+    https: 30443
+
+accessLogs:
+  enabled: true
+  format: json
+
+rbac:
+  enabled: true
+
+metrics:
+  prometheus:
+    enabled: true

@@ -6,3 +6,8 @@ data "helm_repository" "stable" {
   name = "stable"
   url  = "https://kubernetes-charts.storage.googleapis.com"
 }
+
+data "helm_repository" "gitlab" {
+  name = "gitlab"
+  url  = "https://charts.gitlab.io"
+}

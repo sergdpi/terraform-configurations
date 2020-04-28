@@ -11,3 +11,7 @@ data "helm_repository" "gitlab" {
   name = "gitlab"
   url  = "https://charts.gitlab.io"
 }
+
+data "vault_generic_secret" "gitlab_runner_zw" {
+  path = "kv-2/wa/gitlab"
+}

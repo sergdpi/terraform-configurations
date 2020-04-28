@@ -9,3 +9,7 @@ provider "helm" {
     config_path = local.config_path
   }
 }
+
+provider "template" {
+  version = "2.1.2"
+}

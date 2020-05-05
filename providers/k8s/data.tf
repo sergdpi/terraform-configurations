@@ -15,3 +15,7 @@ data "helm_repository" "gitlab" {
 data "vault_generic_secret" "gitlab_runner_zw" {
   path = "kv-2/wa/gitlab"
 }
+
+data "vault_generic_secret" "grafana_admin_password" {
+  path = "kv-2/wa/grafana"
+}

@@ -1,5 +1,4 @@
-#gitlabUrl: https://gitlab.devopsua.tk/
-gitlabUrl: http://sg-wa-a.ua.int/
+gitlabUrl: https://gitlab.devopsua.tk/
 
 rbac:
   create: false
@@ -13,8 +12,3 @@ runners:
 
 unregisterRunners: false
 runnerToken: ${runner_token}
-
-hostAliases:
- - ip: "172.16.160.208"
-   hostnames:
-   - "gitlab.devopsua.tk"

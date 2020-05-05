@@ -13,3 +13,8 @@ provider "helm" {
 provider "template" {
   version = "2.1.2"
 }
+
+provider "k8s" {
+  version = "0.7.6"
+  config_path = local.config_path
+}

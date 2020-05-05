@@ -1,0 +1,182 @@
+commonLabels:
+  prometheus: prometheus-k8s-devops
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false
+    general: true
+    k8s: true
+    kubeApiserver: false
+    kubeApiserverError: true
+    kubePrometheusNodeAlerting: true
+    kubePrometheusNodeRecording: true
+    kubernetesAbsent: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeScheduler: false
+    network: true
+    node: true
+    prometheus: true
+    prometheusOperator: true
+    time: true
+
+alertmanager:
+
+  ## Deploy alertmanager
+  ##
+  enabled: true
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+  config:
+    route:
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 30m
+      receiver: 'disabled'
+      routes:
+        - receiver: 'disabled'
+          match_re:
+            severity: disabled
+          continue: false
+        - receiver: 'slack'
+          match_re:
+            severity: critical
+          continue: true
+      receivers:
+        - name: disabled
+        - name: 'slack'
+          slack_configs:
+            - api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+              send_resolved: true
+              channel: 'monitoring-devops'
+              title: "Alertmanager Notification"
+              text: |-
+                {{ range .Alerts }}
+                  *Alert:* {{ .Annotations.summary }} - `{{ .Labels.severity }}`
+                  *Description:* {{ .Annotations.description }}
+                  *Graph:* <{{ .GeneratorURL }}|:chart_with_upwards_trend:>
+                  *Details:*
+                  {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+                  {{ end }}
+                {{ end }}
+              color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical"}}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}danger{{end }}{{ else }}good{{ end }}'
+  ingress:
+    enabled: true
+  hosts:
+    - alertmanager.devopsua.tk
+
+  alertmanagerSpec:
+    image:
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.20.0
+
+    replicas: 1
+    retention: 1h
+
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 125m
+      limits:
+        memory: 256Mi
+
+grafana:
+  enabled: true
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 125m
+    limits:
+      memory: 256Mi
+  adminPassword: ${grafana_admin_pass}
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.devopsua.tk
+  plugins:
+    - grafana-piechart-panel
+#  grafana.ini:
+#    gitlab:
+
+kubeApiServer:
+  enabled: false
+
+kubeControllerManager:
+  enabled:
+
+kubeEtcd:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+prometheus:
+
+  enabled: true
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+  ingress:
+    enabled: true
+    annotations: {}
+    labels: {}
+
+    hosts:
+      - prometheus.devopsua.tk
+
+  prometheusSpec:
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    listenLocal: false
+
+    ruleSelectorNilUsesHelmValues: true
+    ruleSelector:
+      matchExpressions:
+          - key: prometheus
+            operator: In
+            values:
+              - prometheus-k8s-devops
+    serviceMonitorSelector:
+      matchLabels:
+        prometheus: prometheus-k8s-devops
+
+    retention: 5d
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: prom
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    additionalScrapeConfigs:
+      - job_name: 'gitlab'
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /-/metrics
+        scheme: https
+        static_configs:
+          - targets: [ 'gitlab.devopsua.tk.ua:443']
+
+      - job_name: 'traefik'
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+          - targets: [ 'sg-wa-b.ua.int:9100']

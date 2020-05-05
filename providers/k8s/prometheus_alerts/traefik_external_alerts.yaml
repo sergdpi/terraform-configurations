@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: prometheus-operator
+    prometheus: prometheus-k8s-devops
+  name: prometheus-traefik-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: traefik-external
+      rules:
+        - alert: TraefikBackendDown
+          expr: count(traefik_backend_server_up) by (backend) == 0
+          for: 5m
+          labels:
+            severity: error
+          annotations:
+            summary: "Traefik backend down (instance {{ $labels.instance }})"
+            description: "All Traefik backends are down\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"

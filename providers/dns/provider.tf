@@ -1,3 +1,12 @@
+terraform {
+  required_version = "0.12.24"
+  backend "s3" {}
+}
+
+data "vault_generic_secret" "dns_rndc_key" {
+  path = "kv-2/wa/dns"
+}
+
 provider "dns" {
   version = "~> 2.2"
   update {

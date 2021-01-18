@@ -1,3 +1,8 @@
+terraform {
+  required_version = "0.12.24"
+  backend "s3" {}
+}
+
 provider "vault" {
   version = "~> 2.8"
   address = var.vault_address

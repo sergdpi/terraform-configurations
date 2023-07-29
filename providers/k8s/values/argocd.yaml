@@ -1,11 +1,144 @@
-resource "helm_release" "argocd" {
-  name = "argo-cd"
-  repository = local.argocd_community_helm_repository
-  chart = "argo-cd"
-  version = local.helm_argocd_version
-  namespace = "argocd"
+global:
+  additionalLabels:
+    Component: argocd
+    Environment: dev
+  logging:
+    format: json
+    level: warn
 
-  values = [
-    file("${path.module}/values/argocd.yaml")
-  ]
-}
+configs:
+  cm:
+    exec.enabled: true
+    url: ${url}
+    statusbadge.enabled: "true"
+    ksonnet.enabled: "false"
+    application.instanceLabelKey: argocd.argoproj.io/instance
+    application.resourceTrackingMethod: annotation
+    accounts.read-only: apiKey, login
+  params:
+    server.enable.gzip: true
+  rbac:
+    policy.default: 'role:admin'
+    scopes: "[email,groups]"
+    policy.csv: |
+      g, read-only, role:readonly
+  secret:
+    argocdServerAdminPassword: ${admin_password}
+    argocdServerAdminPasswordMtime: "2006-01-02T15:04:05Z"
+  extra:
+    accounts.read-only.password: ${read_only_password}
+    accounts.read-only.passwordMtime: "2006-01-02T15:04:05Z"
+
+controller:
+  priorityClassName: "system-cluster-critical"
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  ## Server metrics controller configuration
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus-operator
+    applicationLabels:
+      enabled: true
+      labels:
+        - Project
+        - Component
+
+dex:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus-operator
+
+redis:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 64Mi
+    requests:
+      cpu: 200m
+      memory: 64Mi
+
+server:
+  replicas: 1
+  env:
+    - name: ARGOCD_API_SERVER_REPLICAS
+      value: '1'
+  certificate:
+    enabled: false
+    domain: ${domain}
+    secretName: argocd-server-tls
+  priorityClassName: "system-cluster-critical"
+  resources:
+    limits:
+      cpu: 512m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    ingressClassName: "nginx"
+    hosts:
+      - ${domain}
+    tls:
+      - hosts:
+          - ${domain}
+        secretName: argocd-server-tls
+
+  ## Server metrics service configuration
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+repoServer:
+  replicas: 2
+  priorityClassName: "system-cluster-critical"
+  resources:
+    limits:
+      cpu: 512m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  ## Repo server metrics service configuration
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+applicationSet:
+  enabled: false
+
+notifications:
+  enabled: true
+  name: notifications-controller
+  secret:
+    create: true
+  metrics:
+    enabled: true
+    port: 9100
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus-operator

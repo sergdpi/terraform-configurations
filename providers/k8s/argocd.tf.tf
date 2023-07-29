@@ -27,7 +27,7 @@ resource "helm_release" "argo-cd" {
   version    = local.argocd.argocd_helm_chart_version
   namespace  = "argocd"
 
-  values = [templatefile("${path.module}/templates/argocd-values.yaml", {
+  values = [templatefile("${path.module}/values/argocd-values.yaml", {
     domain             = local.argocd.argocd_domain
     url                = "https://${local.argocd.argocd_domain}"
     admin_password     = null_resource.bcrypted_password.triggers.result
